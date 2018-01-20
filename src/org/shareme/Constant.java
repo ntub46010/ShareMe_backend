@@ -4,7 +4,7 @@ public class Constant {
 	public static final String DB_IP = "localhost";
 	public static final String DB_NAME = "ShareMe";
 	public static final String DB_USER = "sa";
-	public static final String DB_PASSWORD = "2rrxuolx";
+	public static final String DB_PASSWORD = "1234";
 	public static final String DB_CONNECT_STRING = String.format(
 			"jdbc:sqlserver://%s;databaseName=%s;user=%s;password=%s", DB_IP, DB_NAME, DB_USER, DB_PASSWORD
 			);
