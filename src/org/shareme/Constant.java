@@ -4,7 +4,7 @@ public class Constant {
 	public static final String DB_IP = "localhost";
 	public static final String DB_NAME = "ShareMe";
 	public static final String DB_USER = "sa";
-	public static final String DB_PASSWORD = "1234";
+	public static final String DB_PASSWORD = "2rrxuolx";
 	public static final String DB_CONNECT_STRING = String.format(
 			"jdbc:sqlserver://%s;databaseName=%s;user=%s;password=%s", DB_IP, DB_NAME, DB_USER, DB_PASSWORD
 			);
@@ -38,6 +38,9 @@ public class Constant {
 	public static final String KEY_IS_SETTING = "IsSetting";
 	public static final String KEY_GIVER_ID = "GiverId";
 	public static final String KEY_RECEIVER_ID = "ReceiverId";
+	
+	public static final String KEY_POSITIVE = "Positive";
+	public static final String KEY_NEGATIVE = "Negative";
 	public static final String KEY_VALUE = "Value";
 	public static final String KEY_SENDER_ID = "SenderId";
 	public static final String KEY_AVATAR = "Avatar";

@@ -73,24 +73,25 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/list_products")
-	public Response listProducts (String reqJSONString) throws JSONException {
+	public Response listProducts (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String type = iptObj.getString(Constant.KEY_TYPE);
 			String keyword = iptObj.getString(Constant.KEY_KEYWORD);
 			
-			optObj.put(Constant.KEY_PRODUCTS, new JSONArray(getQueryJSONString(
+			JSONArray ary = new JSONArray(getQueryJSONString(
 					String.format("exec 列示商品 '%s', '%s'", type, keyword)
-					, true)));
+					, true));
 			
-			//避免未找到商品也會加入true
-			if (optObj.get(Constant.KEY_PRODUCTS).toString().equals("[]"))
-				throw new SQLException();
-			
-			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+			if (ary.length() != 0) {
+				optObj.put(Constant.KEY_PRODUCTS, ary);
+				optObj.put(Constant.KEY_STATUS, true);
+			}else {
+				optObj.put(Constant.KEY_STATUS, false);				
+			}
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -99,9 +100,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/post_product")
-	public Response postProduct (String reqJSONString) throws JSONException {
+	public Response postProduct (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String title = iptObj.getString(Constant.KEY_TITLE);
 			String price = iptObj.getString(Constant.KEY_PRICE);
@@ -121,9 +124,8 @@ public class WebService {
 							title, price, type, condition, note, ps, seller, photo1, photo2, photo3, photo4, photo5)
 					, false)));
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
+		} catch (JSONException | SQLException e) {
 			e.printStackTrace();
-			optObj.put(Constant.KEY_STATUS, false);
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -132,9 +134,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/product_detail")
-	public Response showProduct (String reqJSONString) throws JSONException {
+	public Response showProduct (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
@@ -151,9 +155,8 @@ public class WebService {
 			
 			optObj.put(Constant.KEY_PRODUCT, obj);
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			//e.printStackTrace();
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -162,9 +165,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/add_favorite")
-	public Response addFavorite (String reqJSONString) throws JSONException {
+	public Response addFavorite (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
@@ -177,9 +182,8 @@ public class WebService {
 				optObj.put(Constant.KEY_IS_ADD, false);				
 			
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
+		} catch (JSONException | SQLException e) {
 			e.printStackTrace();
-			optObj.put(Constant.KEY_STATUS, false);
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -188,9 +192,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/show_profile")
-	public Response showProfile (String reqJSONString) throws JSONException {
+	public Response showProfile (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String memberId = iptObj.getString(Constant.KEY_MEMBER_ID);
@@ -199,24 +205,25 @@ public class WebService {
 			JSONObject obj = new JSONObject(getQueryJSONString(
 					String.format("exec 顯示會員檔案 '%s', '%s'", userId, memberId), false
 			));
-			//若不是在設定頁面，則將密碼移除
-			if (!isSetting)
+			
+			//若是在會員檔案頁面，則將密碼移除，並加入庫存
+			if (!isSetting) {
 				obj.remove(Constant.KEY_PASSWORD);
-			
-			optObj.put(Constant.KEY_PROFILE, obj);
-			
-			//避免未找到會員也會加入true
-			if (optObj.get(Constant.KEY_PROFILE).toString().equals("[]"))
-				throw new SQLException();
-			else {
+				optObj.put(Constant.KEY_PROFILE, obj);
+				
 				optObj.put(Constant.KEY_STOCK, new JSONArray(getQueryJSONString(
 						String.format("exec 列示庫存 '%s'", userId), true					
-				)));				
-			}			
+				)));
+			}else {
+				obj.remove(Constant.KEY_POSITIVE);
+				obj.remove(Constant.KEY_NEGATIVE);
+				obj.remove(Constant.KEY_VALUE);
+				optObj.put(Constant.KEY_PROFILE, obj);
+			}
+				
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
+		} catch (JSONException | SQLException e) {			
 			e.printStackTrace();
-			optObj.put(Constant.KEY_STATUS, false);
 		}
 		return getJSONResponse(optObj.toString());
 	}	
@@ -225,9 +232,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/evaluate")
-	public Response evaluate (String reqJSONString) throws JSONException {
+	public Response evaluate (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String giverId = iptObj.getString(Constant.KEY_GIVER_ID);
 			String receiverId = iptObj.getString(Constant.KEY_RECEIVER_ID);
@@ -235,9 +244,10 @@ public class WebService {
 			executeUpdate(
 					String.format("exec 評價會員 '%s', '%s', '%s'", giverId, receiverId, value)
 			);
+			
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -246,17 +256,24 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/list_favorite")
-	public Response listFavorite (String reqJSONString) throws JSONException {
+	public Response listFavorite (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
-			optObj.put(Constant.KEY_FAVORITE, new JSONArray(getQueryJSONString(
+			
+			JSONArray ary = new JSONArray(getQueryJSONString(
 					String.format("exec 列示我的最愛 '%s'", userId), true
-			)));
-			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+			));
+			
+			if (ary.length() != 0) {
+				optObj.put(Constant.KEY_PRODUCTS, ary);
+				optObj.put(Constant.KEY_STATUS, true);
+			}else {
+				optObj.put(Constant.KEY_STATUS, false);
+			}
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -265,17 +282,63 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/list_mails")
-	public Response listMails (String reqJSONString) throws JSONException {
+	public Response listMails (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
-			optObj.put(Constant.KEY_MAILS, new JSONArray(getQueryJSONString(
+			
+			JSONArray ary = new JSONArray(getQueryJSONString(
 					String.format("exec 列示信箱訊息 '%s'", userId), true
-			)));
-			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
+			));
+			
+			if (ary.length() != 0) {
+				optObj.put(Constant.KEY_MAILS, ary);
+				optObj.put(Constant.KEY_STATUS, true);
+			}else {
+				optObj.put(Constant.KEY_STATUS, false);
+			}			
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
+		}
+		return getJSONResponse(optObj.toString());
+	}
+	
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/show_chatroom")
+	public Response showChatroom (String reqJSONString) {
+		JSONObject optObj = new JSONObject();
+		try {
 			optObj.put(Constant.KEY_STATUS, false);
+
+			JSONObject iptObj = new JSONObject(reqJSONString);
+			String userId = iptObj.getString(Constant.KEY_USER_ID);
+			String memberId = iptObj.getString(Constant.KEY_MEMBER_ID);
+			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
+			
+			optObj = new JSONObject(getQueryJSONString(
+					String.format("exec 搜尋大頭貼 '%s'", userId), false
+			));
+			optObj.put(Constant.KEY_STATUS, false);
+			
+			/*
+			optObj.put(Constant.KEY_AVATAR, new JSONObject(getQueryJSONString(
+					String.format("exec 搜尋大頭貼 '%s'", userId), false
+			)));
+			*/
+			
+			optObj.put(Constant.KEY_PRODUCTS, new JSONArray(getQueryJSONString(
+					String.format("exec 列示交談商品 '%s', '%s'", userId, memberId), true
+			)));
+			
+			optObj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
+					String.format("exec 列示交談訊息 '%s', '%s', '%s'", userId, memberId, productId), true
+			)));			
+			
+			optObj.put(Constant.KEY_STATUS, true);			
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -284,23 +347,23 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/list_message")
-	public Response listMessage (String reqJSONString) throws JSONException {
+	public Response listMessage (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String memberId = iptObj.getString(Constant.KEY_MEMBER_ID);
-			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
-			optObj = new JSONObject(getQueryJSONString(
-					String.format("exec 搜尋大頭貼", memberId), false
-			));
+			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);			
+			
 			optObj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
 					String.format("exec 列示交談訊息 '%s', '%s', '%s'", userId, memberId, productId), true
 			)));
 			
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -309,9 +372,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/send_message")
-	public Response sendMessage (String reqJSONString) throws JSONException {
+	public Response sendMessage (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String senderId = iptObj.getString(Constant.KEY_SENDER_ID);
 			String receiverId = iptObj.getString(Constant.KEY_RECEIVER_ID);
@@ -323,7 +388,7 @@ public class WebService {
 			);			
 			optObj.put(Constant.KEY_STATUS, true);
 		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -332,21 +397,24 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/show_stock")
-	public Response showStock (String reqJSONString) throws JSONException {
+	public Response showStock (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
-			optObj.put(Constant.KEY_STOCK, new JSONArray(getQueryJSONString(
-					String.format("exec 列示庫存 '%s'", userId), true					
-			)));
-			//避免未找到商品也會加入true
-			if (optObj.get(Constant.KEY_STOCK).toString().equals("[]"))
-				throw new SQLException();
 			
-			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+			JSONArray ary = new JSONArray(getQueryJSONString(
+					String.format("exec 列示庫存 '%s'", userId), true					
+			));
+			
+			if (ary.length() != 0) {
+				optObj.put(Constant.KEY_STOCK, ary);
+				optObj.put(Constant.KEY_STATUS, true);
+			}else {
+				optObj.put(Constant.KEY_STATUS, false);
+			}
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -355,9 +423,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/edit_product")
-	public Response editProduct (String reqJSONString) throws JSONException {
+	public Response editProduct (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
 			String title = iptObj.getString(Constant.KEY_TITLE);
@@ -377,8 +447,8 @@ public class WebService {
 									productId, title, price, type, condition, note, ps, photo1, photo2, photo3, photo4, photo5)
 			);
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -387,17 +457,20 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/drop_product")
-	public Response dropProduct (String reqJSONString) throws JSONException {
+	public Response dropProduct (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
+			
 			executeUpdate(
 					String.format("exec 下架商品 '%s'", productId)
 			);
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -406,9 +479,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/edit_profile")
-	public Response editProfile (String reqJSONString) throws JSONException {
+	public Response editProfile (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String avatar = iptObj.getString(Constant.KEY_AVATAR);
@@ -421,8 +496,8 @@ public class WebService {
 									userId, avatar, name, department, email, pwd)
 			);
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		} catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
