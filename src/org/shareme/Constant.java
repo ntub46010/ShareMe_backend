@@ -44,13 +44,14 @@ public class Constant {
 	public static final String KEY_VALUE = "Value";
 	public static final String KEY_SENDER_ID = "SenderId";
 	public static final String KEY_AVATAR = "Avatar";
-	
+	public static final String KEY_HAVE_TALKED = "HaveTalked";
 	
 	public static final String KEY_PROFILE = "Profile";
 	public static final String KEY_PRODUCTS = "Products";
 	public static final String KEY_STOCK = "Stock";
 	public static final String KEY_MAILS = "Mails";
 	public static final String KEY_MESSAGE = "Message";
+	public static final String KEY_CHAT = "Chat";
 	
 
 }

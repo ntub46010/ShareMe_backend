@@ -27,9 +27,11 @@ public class WebService {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/register")
-	public Response register (String reqJSONString) throws JSONException {
+	public Response register (String reqJSONString) {
 		JSONObject optObj = new JSONObject();
 		try {
+			optObj.put(Constant.KEY_STATUS, false);
+			
 			JSONObject iptObj = new JSONObject(reqJSONString);
 			String userId = iptObj.getString(Constant.KEY_USER_ID);
 			String pwd = iptObj.getString(Constant.KEY_PASSWORD);
@@ -40,9 +42,10 @@ public class WebService {
 			executeUpdate(
 					String.format("exec 註冊 '%s', '%s', '%s', '%s', '%s', '%s'", userId, pwd, name, dep, gender, email
 			));
+			
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
-			optObj.put(Constant.KEY_STATUS, false);
+		}catch (JSONException | SQLException e) {
+			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
 	}
@@ -144,14 +147,22 @@ public class WebService {
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
 			String anyway = iptObj.getString(Constant.KEY_ANYWAY);
 			
+			//沒找到商品會傳回false
 			JSONObject obj = new JSONObject(getQueryJSONString(
 					String.format("exec 顯示商品詳情 '%s', '%s', '%s'", userId, productId, anyway), false
-			)); //沒找到商品會發失利外傳回false
-			//修正最愛的值為布林
+			)); 
+			
+			//覆蓋是否最愛的值為布林
 			if (obj.getString(Constant.KEY_FAVORITE).equals("1"))
 				obj.put(Constant.KEY_FAVORITE, true);
 			else
 				obj.put(Constant.KEY_FAVORITE, false);
+			
+			//覆蓋是否談過的值為布林
+			if (obj.getString(Constant.KEY_HAVE_TALKED).equals("1"))
+				obj.put(Constant.KEY_HAVE_TALKED, true);
+			else
+				obj.put(Constant.KEY_HAVE_TALKED, false);
 			
 			optObj.put(Constant.KEY_PRODUCT, obj);
 			optObj.put(Constant.KEY_STATUS, true);
@@ -212,7 +223,7 @@ public class WebService {
 				optObj.put(Constant.KEY_PROFILE, obj);
 				
 				optObj.put(Constant.KEY_STOCK, new JSONArray(getQueryJSONString(
-						String.format("exec 列示庫存 '%s'", userId), true					
+						String.format("exec 列示庫存 '%s'", memberId), true					
 				)));
 			}else {
 				obj.remove(Constant.KEY_POSITIVE);
@@ -304,6 +315,7 @@ public class WebService {
 		return getJSONResponse(optObj.toString());
 	}
 	
+	//顯示完整交談室
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/show_chatroom")
@@ -318,23 +330,21 @@ public class WebService {
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);
 			
 			optObj = new JSONObject(getQueryJSONString(
-					String.format("exec 搜尋大頭貼 '%s'", userId), false
+					String.format("exec 搜尋大頭照 '%s', '%s'", userId, memberId), false
 			));
 			optObj.put(Constant.KEY_STATUS, false);
-			
-			/*
-			optObj.put(Constant.KEY_AVATAR, new JSONObject(getQueryJSONString(
-					String.format("exec 搜尋大頭貼 '%s'", userId), false
-			)));
-			*/
-			
+						
 			optObj.put(Constant.KEY_PRODUCTS, new JSONArray(getQueryJSONString(
 					String.format("exec 列示交談商品 '%s', '%s'", userId, memberId), true
 			)));
 			
-			optObj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
+			JSONObject obj = new JSONObject(getQueryJSONString(
+					String.format("exec 搜尋商品名稱 '%s'", productId), false					
+			));
+			obj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
 					String.format("exec 列示交談訊息 '%s', '%s', '%s'", userId, memberId, productId), true
 			)));			
+			optObj.put(Constant.KEY_CHAT, obj);			
 			
 			optObj.put(Constant.KEY_STATUS, true);			
 		} catch (JSONException | SQLException e) {
@@ -357,9 +367,13 @@ public class WebService {
 			String memberId = iptObj.getString(Constant.KEY_MEMBER_ID);
 			String productId = iptObj.getString(Constant.KEY_PRODUCT_ID);			
 			
-			optObj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
+			JSONObject obj = new JSONObject(getQueryJSONString(
+					String.format("exec 搜尋商品名稱 '%s'", productId), false					
+			));
+			obj.put(Constant.KEY_MESSAGE, new JSONArray(getQueryJSONString(
 					String.format("exec 列示交談訊息 '%s', '%s', '%s'", userId, memberId, productId), true
-			)));
+			)));			
+			optObj.put(Constant.KEY_CHAT, obj);		
 			
 			optObj.put(Constant.KEY_STATUS, true);
 		} catch (JSONException | SQLException e) {
@@ -387,7 +401,7 @@ public class WebService {
 									senderId, receiverId, productId, message)					
 			);			
 			optObj.put(Constant.KEY_STATUS, true);
-		} catch (JSONException|SQLException e) {
+		} catch (JSONException | SQLException e) {
 			e.printStackTrace();
 		}
 		return getJSONResponse(optObj.toString());
